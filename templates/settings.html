@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Settings</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Settings</h1>
+        <form action="{{ url_for('update_username') }}" method="post">
+            <div class="form-group">
+                <label for="new_username">Change Username:</label>
+                <input type="text" id="new_username" name="new_username" class="form-control" required>
+                <button type="submit" class="btn btn-primary">Update Username</button>
+            </div>
+        </form>
+        <form action="{{ url_for('delete_account') }}" method="post">
+            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete your account? This action cannot be undone.');">Delete Account</button>
+        </form>
+        <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+    <script src="{{ url_for('static', filename='anim.js') }}"></script>
+</body>
+</html>

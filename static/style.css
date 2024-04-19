@@ -1,0 +1,147 @@
+/* style.css */
+body, html {
+    height: 100%;
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+.container {
+    width: 90%;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    margin-top: 50px;
+    transition: box-shadow 0.3s ease-in-out;
+}
+
+.container:hover {
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+
+h1, h2, h3 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+input[type="text"], input[type="password"], select, button, .form-control-file {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    display: inline-block;
+    border: 1px solid #ccc;
+    background: #f1f1f1;
+    border-radius: 4px;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+input[type="text"]:focus, input[type="password"]:focus, select:focus, button:focus {
+    background-color: #ddd;
+    border-color: #80bdff;
+    outline: none;
+}
+
+button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 12px 18px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+button:hover, button:focus {
+    background-color: #45a049;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+form {
+    border-radius: 5px;
+    padding: 20px;
+    background: #ffffff;
+    box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.1);
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+li {
+    background-color: #ffffff;
+    margin-top: 8px;
+    padding: 12px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.btn-sm {
+    padding: 5px 10px;
+    font-size: 0.8rem;
+}
+
+.btn-primary, .btn-danger, .btn-success {
+    border-radius: 4px;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-primary:hover, .btn-danger:hover, .btn-success:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+}
+
+.text-success {
+    color: #28a745;
+}
+
+.messages div.sent {
+    text-align: right;
+    background-color: #dcf8c6;
+    padding: 5px;
+    border-radius: 10px;
+    margin: 5px;
+}
+
+.messages div.received {
+    text-align: left;
+    background-color: #ebebeb;
+    padding: 5px;
+    border-radius: 10px;
+    margin: 5px;
+}
+
+.new-message-form {
+    width: 50%;  /* Adjust width as needed */
+    margin: 20px auto; /* Centers the form horizontally */
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1); /* Optional: adds shadow for better visibility */
+    border-radius: 8px; /* Optional: rounds the corners of the form */
+    background-color: #fff; /* Optional: changes background color */
+}
+
+.form-control {
+    display: block;
+    width: 100%; /* Ensures input fills the form */
+    padding: 10px;
+    margin-bottom: 10px; /* Adds space between form fields */
+    box-sizing: border-box; /* Includes padding and border in the width */
+}
+
+.btn-primary {
+    width: 100%; /* Optional: makes the button as wide as the form */
+    padding: 10px 0;
+}
+
+.container {
+    max-width: 800px; /* Adjust the max-width of the container to better fit your design */
+    margin: 0 auto; /* This will also center the container in the middle of the page */
+}

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Conversation</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container">
+    <h1>Conversation</h1>
+    <a href="{{ url_for('messages') }}" class="btn btn-secondary">Back to Messages</a>
+    <div class="messages">
+        {% for message in messages %}
+        <div class="{{ 'sent' if message.sender_id == session['user_id'] else 'received' }}">
+            <p>{{ message.body }}</p>
+            <small>{{ message.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</small>
+        </div>
+        {% endfor %}
+    </div>
+    <form action="{{ url_for('send_message_to_conversation', conversation_id=conversation.id) }}" method="post">
+        <input type="text" name="message" placeholder="Type your message here..." required>
+        <button type="submit">Send</button>
+    </form>    
+</div>
+<script src="{{ url_for('static', filename='socket.io.js') }}"></script>
+<script src="{{ url_for('static', filename='anim.js') }}"></script>
+</body>
+</html>
