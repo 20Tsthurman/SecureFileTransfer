@@ -17,17 +17,17 @@
         <ul>
             {% for file in sent_files %}
             <li>
-                {{ file.filename }} - Sent to {{ file.recipient_user.username }} on {{ file.timestamp }}
+                <strong>{{ file.filename }}</strong> - Sent to {{ file.recipient_user.username }} on {{ file.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
                 <span class="text-success">&#x1F512; Encrypted</span>
             </li>
             {% endfor %}
         </ul>
-
+        
         <h3>Received Files</h3>
         <ul>
             {% for file in received_files %}
             <li>
-                {{ file.filename }} - Received from {{ file.sender_user.username }} on {{ file.timestamp }}
+                <strong>{{ file.filename }}</strong> - Received from {{ file.sender_user.username }} on {{ file.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
                 <span class="text-success">&#x1F512; Encrypted</span>
                 <div>
                     <a href="{{ url_for('download_file', file_id=file.id) }}" class="btn btn-sm btn-primary">Download</a>

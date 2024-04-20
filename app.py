@@ -1,15 +1,23 @@
+import json
+import socket
+import threading
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from cryptography.fernet import Fernet
 import io
 from datetime import datetime
-from flask_socketio import SocketIO
+import base64
+
+ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 app = Flask(__name__, static_url_path='/static', static_folder='static')
 app.config['SECRET_KEY'] = 'YourSecretKey'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
-socketio = SocketIO(app)
 
 db = SQLAlchemy(app)
 
@@ -17,6 +25,79 @@ conversation_participants = db.Table('conversation_participants',
     db.Column('conversation_id', db.Integer, db.ForeignKey('conversation.id'), primary_key=True),
     db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True)
 )
+
+def start_tcp_server(host, port):
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server_socket.bind((host, port))
+    server_socket.listen()
+    print(f"TCP Server listening on {host}:{port}")
+
+    while True:
+        client_socket, addr = server_socket.accept()
+        print(f'Connection established with {addr}')
+        handle_client_connection(client_socket)
+
+def handle_client_connection(client_socket):
+    try:
+        received_data = b""
+        while True:
+            part = client_socket.recv(1024)
+            if not part:
+                break
+            received_data += part
+
+        if received_data:
+            print(f"Received data from client")
+            # Extract recipient username and sender ID from received data
+            payload = json.loads(received_data.decode('utf-8'))
+            recipient_username = payload.get('recipient')
+            sender_id = payload.get('sender_id')  # Get the sender's user ID from the payload
+            file_data = base64.b64decode(payload['filedata'])
+            filename = payload.get('filename')
+
+            print(f"Extracted recipient: {recipient_username}")
+            print(f"Extracted sender ID: {sender_id}")  # Print the extracted sender ID
+            print(f"File data received, size: {len(file_data)} bytes")
+
+            # Process and save file data to database
+            with app.app_context():
+                recipient = User.query.filter_by(username=recipient_username).first()
+                encryption_key = generate_encryption_key()
+                encrypted_data = encrypt_file(file_data, encryption_key)
+                print(f"File data encrypted, size: {len(encrypted_data)} bytes")
+                new_file = FileTransfer(
+                    filename=filename,
+                    file_data=encrypted_data,
+                    sender_id=sender_id,  # Use the sender's user ID
+                    recipient_id=recipient.id if recipient else None,  # Set recipient ID to None if recipient not found
+                    encryption_key=encryption_key
+                )
+                db.session.add(new_file)
+                db.session.commit()
+                print(f"File saved to database successfully, file ID: {new_file.id}")
+    except Exception as e:
+        print(f"Error: {e}")
+    finally:
+        client_socket.close()
+        print("Connection closed with client")
+
+if __name__ == '__main__':
+    threading.Thread(target=start_tcp_server, args=('0.0.0.0', 5003)).start()
+
+def send_file_tcp(host, port, file_path):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.connect((host, port))
+        with open(file_path, 'rb') as f:
+            file_data = f.read()
+
+        file_name = file_path.split('/')[-1]
+        payload = {
+            "filename": file_name,
+            "filedata": base64.b64encode(file_data).decode('utf-8')  # Encode file data as base64
+        }
+        payload_json = json.dumps(payload)
+        sock.sendall(payload_json.encode('utf-8'))
 
 # Define models
 class User(db.Model):
@@ -31,7 +112,7 @@ class User(db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
-    
+
 # Define Conversation and Message models correctly
 class Conversation(db.Model):
     __tablename__ = 'conversation'
@@ -60,12 +141,12 @@ def conversation(conversation_id):
     if 'user_id' not in session:
         flash("Please log in to view this conversation.")
         return redirect(url_for('login'))
-    
+
     conversation = Conversation.query.get(conversation_id)
     if not conversation:
         flash("Conversation not found.")
         return redirect(url_for('messages'))
-    
+
     # Sort messages by timestamp
     messages = sorted(conversation.messages, key=lambda x: x.timestamp)
     return render_template('conversation.html', conversation=conversation, messages=messages)
@@ -131,10 +212,10 @@ class FileTransfer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(100), nullable=False)
     file_data = db.Column(db.LargeBinary, nullable=False)
-    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    recipient_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    recipient_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    encryption_key = db.Column(db.String(200), nullable=False)
+    encryption_key = db.Column(db.String(200), nullable=False)  # Make this column NOT NULL
 
 # Generate a new encryption key
 def generate_encryption_key():
@@ -162,6 +243,7 @@ def dashboard():
     if 'user_id' not in session:
         flash("Please log in to access the dashboard.")
         return redirect(url_for('login'))
+
     user = db.session.get(User, session['user_id'])
     sent_files = user.sent_files.all()
     received_files = user.received_files.all()
@@ -253,6 +335,17 @@ def delete_file(file_id):
         flash('File not found or unauthorized')
     return redirect(url_for('dashboard'))
 
+def send_file_to_tcp_server(file_data, filename, recipient_username, sender_id, server_ip, server_port):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.connect((server_ip, server_port))
+        payload = {
+            'recipient': recipient_username,
+            'filename': filename,
+            'sender_id': sender_id,  # Include the sender's user ID in the payload
+            'filedata': base64.b64encode(file_data).decode('utf-8')
+        }
+        sock.sendall(json.dumps(payload).encode('utf-8'))
+
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_file():
     if 'user_id' not in session:
@@ -261,21 +354,16 @@ def upload_file():
     if request.method == 'POST':
         file = request.files['file']
         recipient_username = request.form['recipient']
-        recipient = User.query.filter_by(username=recipient_username).first()
-        if not recipient:
-            flash('Recipient username not found. Please check the username and try again.', 'error')
+        if file and allowed_file(file.filename):
+            file_data = file.read()
+            filename = file.filename
+            sender_id = session['user_id']  # Get the sender's user ID from the session
+            send_file_to_tcp_server(file_data, filename, recipient_username, sender_id, '127.0.0.1', 5003)
+            flash('File successfully sent to TCP server', 'success')
+            return redirect(url_for('dashboard'))
+        else:
+            flash('No file selected or file type not allowed', 'error')
             return redirect(request.url)
-        if 'file' not in request.files or file.filename == '':
-            flash('No file selected', 'error')
-            return redirect(request.url)
-        file_data = file.read()
-        encryption_key = generate_encryption_key()
-        encrypted_data = encrypt_file(file_data, encryption_key)
-        new_file = FileTransfer(filename=file.filename, file_data=encrypted_data, sender_id=session['user_id'], recipient_id=recipient.id, encryption_key=encryption_key)
-        db.session.add(new_file)
-        db.session.commit()
-        flash('File successfully uploaded, encrypted, and sent', 'success')
-        return redirect(url_for('dashboard'))
     return render_template('upload.html')
 
 @app.route('/download/<int:file_id>')
@@ -285,7 +373,7 @@ def download_file(file_id):
         return redirect(url_for('login'))
     file = FileTransfer.query.get(file_id)
     if file and file.recipient_id == session['user_id']:
-        decrypted_data = decrypt_file(file.file_data, file.encryption_key)
+        decrypted_data = decrypt_file(file.file_data, file.encryption_key)  # Use the stored encryption key
         return send_file(io.BytesIO(decrypted_data), download_name=file.filename, as_attachment=True)
     else:
         flash('File not found or unauthorized')
