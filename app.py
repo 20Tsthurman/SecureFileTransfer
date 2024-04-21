@@ -9,7 +9,7 @@ import io
 from datetime import datetime
 import base64
 
-ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
+ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'mp4'])
 
 def allowed_file(filename):
     return '.' in filename and \
