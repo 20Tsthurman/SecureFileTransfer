@@ -1,0 +1,49 @@
+# Secure File Transfer Application
+
+This project is a secure file transfer application that allows users to send and receive files securely between different machines using socket programming in Python. The application ensures the confidentiality and integrity of the transferred files through encryption and reliable data transmission using TCP sockets.
+
+## Features
+
+- User registration and authentication system
+- Secure file upload and download functionality
+- Encryption of file data using the Fernet algorithm (AES-128 in CBC mode)
+- Reliable file transfer using TCP sockets
+- User-friendly web interface for easy interaction
+- Handling of network interruptions and failures with automatic retry mechanisms
+- Storage of encrypted file data in a SQLite database
+
+## Technologies Used
+
+- Python
+- Flask (Web framework)
+- HTML/CSS/JavaScript (Front-end)
+- SQLite (Database)
+- Cryptography library (Encryption)
+- Socket programming (Network communication)
+
+## Installation
+
+1. Clone the repository:
+https://github.com/20Tsthurman/SecureFileTransfer
+2. Navigate to the project directory
+3. Install the required dependencies:
+pip install -r requirements.txt
+4. Run the application:
+python app.py
+5. Access the application in your web browser at `http://localhost:5000`.
+
+## Usage
+
+1. Register a new account or log in with an existing account.
+2. Upload a file by selecting the file and specifying the recipient's username.
+3. The file will be encrypted and securely transferred to the recipient.
+4. The recipient can log in to their account and view the received files.
+5. The recipient can download the received files, which will be decrypted upon download.
+
+## Contributing
+
+Contributions are welcome! If you find any issues or have suggestions for improvements, please open an issue or submit a pull request.
+
+## Contact
+
+For any inquiries or questions, please contact tsthurman03@gmail.com
